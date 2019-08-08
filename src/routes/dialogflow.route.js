@@ -74,8 +74,8 @@ router.post('/message/audio/send', upload.single('audioFile'), async (req, res) 
     session: sessionPath,
     queryInput: {
       audioConfig: {
-        audioEncoding: 'AUDIO_ENCODING_LINEAR_16',
-        sampleRateHertz: 16000,
+        audioEncoding: 'AUDIO_ENCODING_AMR',
+        sampleRateHertz: 8000,
         languageCode: 'pt-BR',
       },
     },
