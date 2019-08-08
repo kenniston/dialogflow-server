@@ -1,6 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const bodyParser = require("body-parser");
+const multer  = require('multer')
+const upload = multer({ dest: 'uploads/' })
+const util = require('util');
+const fs = require('fs');
 
 const dialogflow = require("dialogflow")
 const { struct } = require("pb-util");
@@ -17,7 +21,8 @@ router.use(bodyParser.urlencoded({ extended: true }))
 
 router.post('/message/text/send', async (req, res) => {
   let { text, email, sessionId } = req.body
-  let sessionPath = dialogflowClient.sessionClient.sessionPath(dialogflowClient.projectId, sessionId)
+  let { projectId, sessionClient } = dialogflowClient
+  let sessionPath = sessionClient.sessionPath(projectId, sessionId)
 
   console.log("\n############################");
   console.log("Text Message to Dialogflow");
@@ -45,17 +50,17 @@ router.post('/message/text/send', async (req, res) => {
     }
   };
 
-  responses = await sessionClient.detectIntent(request);
-  result = responses[0].queryResult;
+  const responses = await sessionClient.detectIntent(request);
 
-  console.log("Response....: " + email);
+  console.log("Response....: " + JSON.stringify(responses));
   console.log("############################");
-  res.send(result)
+  res.send(responses)
 })
 
-router.post('/message/audio/send', async (req, res) => {
-  let { text, email, sessionId } = req.body
-  let sessionPath = dialogflowClient.sessionClient.sessionPath(dialogflowClient.projectId, sessionId)
+router.post('/message/audio/send', upload.single('audioFile'), async (req, res) => {
+  let { email, sessionId } = JSON.parse(req.body.json)
+  let { projectId, sessionClient } = dialogflowClient
+  let sessionPath = sessionClient.sessionPath(projectId, sessionId)
 
   console.log("\n############################");
   console.log("Audio Message to Dialogflow");
@@ -63,25 +68,24 @@ router.post('/message/audio/send', async (req, res) => {
   console.log("Email......: " + email);
   console.log("############################");
 
-  // Read the content of the audio file and send it as part of the request.
-  const readFile = util.promisify(fs.readFile);
-  const inputAudio = await readFile(filename);
+  const readFile = util.promisify(fs.readFile)
+  const inputAudio = await readFile(req.file.path)
   const request = {
     session: sessionPath,
     queryInput: {
       audioConfig: {
-        audioEncoding: encoding,
-        sampleRateHertz: sampleRateHertz,
-        languageCode: languageCode,
+        audioEncoding: 'AUDIO_ENCODING_LINEAR_16',
+        sampleRateHertz: 16000,
+        languageCode: 'pt-BR',
       },
     },
     inputAudio: inputAudio,
   };
 
-  const [response] = await sessionClient.detectIntent(request);
+  const responses = await sessionClient.detectIntent(request)
 
-  console.log('Detected intent:');
-  logQueryResult(sessionClient, response.queryResult);
+  console.log('Detected intent:')
+  console.log(JSON.stringify(responses))
 })
 
 router.post('/message/fullfilment', async (req, res) => {
