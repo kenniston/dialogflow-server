@@ -80,12 +80,17 @@ router.post('/message/audio/send', upload.single('audioFile'), async (req, res) 
       },
     },
     inputAudio: inputAudio,
+    outputAudioConfig: {
+      audioEncoding: `OUTPUT_AUDIO_ENCODING_MP3`,
+    },
   };
 
   const responses = await sessionClient.detectIntent(request)
-
   console.log('Detected intent:')
   console.log(JSON.stringify(responses))
+
+  const audioFile = responses[0].outputAudio;
+  util.promisify(fs.writeFile)("uploads/resposta.mp3", audioFile, 'binary');
 })
 
 router.post('/message/fullfilment', async (req, res) => {
