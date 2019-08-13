@@ -5,14 +5,20 @@ const multer  = require('multer')
 const upload = multer({ dest: 'uploads/' })
 const util = require('util');
 const fs = require('fs');
+const _ = require('lodash');
 
 const dialogflow = require("dialogflow")
 const { struct } = require("pb-util");
 
+const privateKey = _.replace(process.env.DIALOGFLOW_PRIVATE_KEY, new RegExp("\\\\n", "\g"), "\n")
+
 var dialogflowClient = {
   projectId: process.env.DIALOGFLOW_PROJECT_ID,
   sessionClient: new dialogflow.SessionsClient({
-    keyFilename: `./dialogflow-dev.json`
+    credentials: {
+      client_email: process.env.DIALOGFLOW_CLIENT_EMAIL,
+      private_key: privateKey
+    }
   })
 }
 
